@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Admin — Equipos{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_dashboard') }}" class="back-link">← Panel de administración</a>
+<h1 class="page-title">Gestión de equipos</h1>
+
+<div class="grid-2col">
+    <div>
+        <h2>Nuevo equipo</h2>
+        <form method="POST" class="form-card">
+            <label>Nombre del equipo</label>
+            <input type="text" name="nombre_equipo" required>
+            <label>País</label>
+            <input type="text" name="pais" required>
+            <label>Entrenador</label>
+            <input type="text" name="entrenador" required>
+            <label>Grupo</label>
+            <select name="grupo" required>
+                {% for g in ['A','B','C','D','E','F','G','H'] %}
+                <option value="{{ g }}">Grupo {{ g }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary btn-block">AGREGAR EQUIPO</button>
+        </form>
+    </div>
+    <div>
+        <h2>Equipos registrados</h2>
+        {% for e in equipos %}
+        <div class="card">
+            <h3>{{ e.nombre_equipo }}</h3>
+            <p class="text-muted">{{ e.pais }} · Grupo {{ e.grupo }} · DT: {{ e.entrenador }}</p>
+        </div>
+        {% else %}
+        <p class="empty-state">No hay equipos.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

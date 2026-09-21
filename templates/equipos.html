@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Equipos{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Equipos participantes</h1>
+
+<div class="filtros-grupo">
+    <a href="{{ url_for('equipos') }}" class="chip {{ 'chip-activo' if not grupo_actual else '' }}">Todos</a>
+    {% for g in ['A','B','C','D','E','F','G','H'] %}
+    <a href="{{ url_for('equipos', grupo=g) }}" class="chip {{ 'chip-activo' if grupo_actual == g else '' }}">Grupo {{ g }}</a>
+    {% endfor %}
+</div>
+
+<div class="grid grid-4">
+    {% for e in equipos %}
+    <a href="{{ url_for('detalle_equipo', equipo_id=e._id) }}" class="card card-equipo">
+        <div class="escudo-placeholder">
+            <img src="https://flagcdn.com/w80/{{ e.codigo_pais }}.png" alt="{{ e.nombre_equipo }}" style="width:48px;height:auto;border-radius:4px;">
+        </div>
+        <h3>{{ e.nombre_equipo }}</h3>
+        <p class="text-muted">{{ e.pais }} · Grupo {{ e.grupo }}</p>
+    </a>
+    {% else %}
+    <p class="empty-state">No hay equipos registrados.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

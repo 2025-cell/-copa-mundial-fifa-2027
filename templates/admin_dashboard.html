@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Panel de administración{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Panel de administración</h1>
+
+<div class="grid grid-4">
+    <div class="stat-box"><span>{{ total_usuarios }}</span>Usuarios</div>
+    <div class="stat-box"><span>{{ total_noticias }}</span>Noticias</div>
+    <div class="stat-box"><span>{{ total_partidos }}</span>Partidos</div>
+    <div class="stat-box"><span>{{ total_apuestas }}</span>Apuestas</div>
+</div>
+
+<div class="grid grid-4 section">
+    <a href="{{ url_for('admin_usuarios') }}" class="menu-tile">👥 Usuarios</a>
+    <a href="{{ url_for('admin_noticias') }}" class="menu-tile">📰 Noticias</a>
+    <a href="{{ url_for('admin_partidos') }}" class="menu-tile">📅 Partidos</a>
+    <a href="{{ url_for('admin_equipos') }}" class="menu-tile">🛡️ Equipos</a>
+</div>
+
+{% endblock %}

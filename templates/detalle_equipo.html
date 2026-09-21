@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ equipo.nombre_equipo }}{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('equipos') }}" class="back-link">← Volver a equipos</a>
+
+<div class="detalle-equipo-header">
+    <div class="escudo-placeholder escudo-grande">🛡️</div>
+    <div>
+        <h1>{{ equipo.nombre_equipo }}</h1>
+        <p class="text-muted">{{ equipo.pais }} · Grupo {{ equipo.grupo }} · DT: {{ equipo.entrenador }}</p>
+    </div>
+</div>
+
+{% if estadistica %}
+<div class="grid grid-4 stats-resumen">
+    <div class="stat-box"><span>{{ estadistica.partidos_jugados }}</span>Jugados</div>
+    <div class="stat-box"><span>{{ estadistica.victorias }}</span>Victorias</div>
+    <div class="stat-box"><span>{{ estadistica.empates }}</span>Empates</div>
+    <div class="stat-box"><span>{{ estadistica.derrotas }}</span>Derrotas</div>
+</div>
+{% endif %}
+
+<h2>Plantilla</h2>
+<div class="grid grid-3">
+    {% for j in jugadores %}
+    <div class="card">
+        <h3>{{ j.nombre }}</h3>
+        <p class="text-muted">{{ j.posicion }} · #{{ j.numero_camiseta }}</p>
+    </div>
+    {% else %}
+    <p class="empty-state">Plantilla no disponible.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

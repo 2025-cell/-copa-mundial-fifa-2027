@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Apuestas{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Apuestas deportivas</h1>
+<p class="text-muted">Juega de forma responsable. Verificado como mayor de edad.</p>
+
+<div class="grid-2col">
+    <div>
+        <h2>Nueva apuesta</h2>
+        <form method="POST" class="form-card">
+            <input type="hidden" name="accion" value="apostar">
+
+            <label>Partido</label>
+            <select name="id_partido" id="select-partido" required>
+                {% for p in partidos %}
+                <option value="{{ p._id }}"
+                        data-local="{{ p.equipo_local_info.nombre_equipo if p.equipo_local_info else 'Equipo local' }}"
+                        data-visitante="{{ p.equipo_visitante_info.nombre_equipo if p.equipo_visitante_info else 'Equipo visitante' }}">
+                    {{ p.fecha }} {{ p.hora }} — {{ p.equipo_local_info.nombre_equipo if p.equipo_local_info else '?' }}
+                    vs {{ p.equipo_visitante_info.nombre_equipo if p.equipo_visitante_info else '?' }} ({{ p.fase }})
+                </option>
+                {% endfor %}
+            </select>
+
+            <label>Tipo de apuesta</label>
+            <select name="tipo_apuesta" id="select-tipo" required>
+                <option value="ganador">Ganador del partido</option>
+                <option value="marcador_exacto">Marcador exacto</option>
+                <option value="goleador">Primer goleador</option>
+            </select>
+
+            <div id="ganador-container">
+                <label>Equipo ganador</label>
+                <select id="select-ganador">
+                    <option value="">Selecciona un equipo</option>
+                </select>
+            </div>
+
+            <label>Predicción</label>
+            <input type="text" name="prediccion" id="input-prediccion" placeholder="Ej. Argentina gana 2-1" required>
+
+            <label>Cantidad ($)</label>
+            <input type="number" name="cantidad" min="10" step="10" required>
+
+            <button type="submit" class="btn btn-primary btn-block">CONFIRMAR APUESTA</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Mis apuestas</h2>
+        {% for a in mis_apuestas %}
+        <div class="card">
+            {% if a.partido_info %}
+            <p class="text-muted" style="margin-bottom:4px;">
+                {{ a.partido_info.equipo_local_info.nombre_equipo if a.partido_info.equipo_local_info else '?' }}
+                vs
+                {{ a.partido_info.equipo_visitante_info.nombre_equipo if a.partido_info.equipo_visitante_info else '?' }}
+            </p>
+            {% endif %}
+            <p><strong>{{ a.tipo_apuesta }}</strong> — {{ a.prediccion }}</p>
+            <p class="text-muted">${{ a.cantidad }} · {{ a.fecha_apuesta.strftime('%d/%m/%Y') }}</p>
+        </div>
+        {% else %}
+        <p class="empty-state">Aún no has realizado apuestas.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    const selectPartido = document.getElementById('select-partido');
+    const selectTipo = document.getElementById('select-tipo');
+    const selectGanador = document.getElementById('select-ganador');
+    const inputPrediccion = document.getElementById('input-prediccion');
+    const ganadorContainer = document.getElementById('ganador-container');
+
+    function poblarGanador() {
+        const opt = selectPartido.options[selectPartido.selectedIndex];
+        if (!opt) return;
+        const local = opt.dataset.local;
+        const visitante = opt.dataset.visitante;
+        selectGanador.innerHTML =
+            '<option value="">Selecciona un equipo</option>' +
+            '<option value="' + local + '">' + local + '</option>' +
+            '<option value="' + visitante + '">' + visitante + '</option>';
+    }
+
+    function actualizarVisibilidad() {
+        if (selectTipo.value === 'ganador') {
+            ganadorContainer.style.display = 'block';
+            inputPrediccion.readOnly = true;
+            inputPrediccion.placeholder = 'Elige un equipo arriba';
+        } else {
+            ganadorContainer.style.display = 'none';
+            inputPrediccion.readOnly = false;
+            inputPrediccion.value = '';
+            inputPrediccion.placeholder = 'Ej. Argentina gana 2-1';
+        }
+    }
+
+    selectGanador.addEventListener('change', function () {
+        if (selectTipo.value === 'ganador') {
+            inputPrediccion.value = selectGanador.value ? (selectGanador.value + ' gana') : '';
+        }
+    });
+
+    selectPartido.addEventListener('change', poblarGanador);
+    selectTipo.addEventListener('change', actualizarVisibilidad);
+
+    poblarGanador();
+    actualizarVisibilidad();
+</script>
+
+{% endblock %}

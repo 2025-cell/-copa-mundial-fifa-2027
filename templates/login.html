@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión — Copa Mundial FIFA 2027</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-body">
+
+<div class="auth-players-strip">
+    {% for jugador in jugadores %}
+    <div class="auth-player-card">
+        <img src="{{ jugador.img }}" alt="{{ jugador.nombre }}">
+        <div class="auth-player-overlay">
+            <span class="auth-player-name">{{ jugador.nombre }}</span>
+            <span class="auth-player-country">{{ jugador.pais }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-logo">🏆</div>
+        <h1>COPA MUNDIAL</h1>
+        <p class="auth-subtitle">EL MUNDO, UN SOLO JUEGO</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for categoria, mensaje in messages %}
+                    <div class="alerta alerta-{{ categoria }}">{{ mensaje }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <label>Correo electrónico</label>
+            <input type="email" name="correo" placeholder="tucorreo@ejemplo.com" required>
+
+            <label>Contraseña</label>
+            <input type="password" name="contrasena" placeholder="••••••••" required>
+
+            <div class="auth-options">
+                <label class="checkbox-label"><input type="checkbox" name="recordar"> Recordarme</label>
+                <a href="#" class="auth-link-sm">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">INICIAR SESIÓN</button>
+        </form>
+
+        <p class="auth-footer-text">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
+
+        <!-- Acceso administrador oculto: el punto casi invisible abre el formulario -->
+        <p style="margin-top:10px;">
+            <a href="#" id="admin-toggle" style="color:#d8ded9; font-size:0.7rem; text-decoration:none;">·</a>
+        </p>
+        <div id="admin-form-wrapper" style="display:none; margin-top:8px;">
+            <form method="POST" action="{{ url_for('admin_login') }}" class="auth-form">
+                <label>Contraseña de administrador</label>
+                <input type="password" name="contrasena_admin" placeholder="••••••••" required>
+                <button type="submit" class="btn btn-secondary btn-block">ENTRAR COMO ADMIN</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('admin-toggle').addEventListener('click', function (e) {
+        e.preventDefault();
+        var wrap = document.getElementById('admin-form-wrapper');
+        wrap.style.display = (wrap.style.display === 'none') ? 'block' : 'none';
+    });
+</script>
+
+</body>
+</html>

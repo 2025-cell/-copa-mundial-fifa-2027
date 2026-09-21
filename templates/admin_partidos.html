@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Admin — Partidos{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_dashboard') }}" class="back-link">← Panel de administración</a>
+<h1 class="page-title">Gestión de partidos</h1>
+
+<div class="grid-2col">
+    <div>
+        <h2>Programar partido</h2>
+        <form method="POST" class="form-card">
+            <label>Fecha</label>
+            <input type="date" name="fecha" required>
+            <label>Hora</label>
+            <input type="time" name="hora" required>
+            <label>Fase</label>
+            <select name="fase" required>
+                <option>Fase de grupos</option>
+                <option>Octavos de final</option>
+                <option>Cuartos de final</option>
+                <option>Semifinal</option>
+                <option>Final</option>
+            </select>
+            <label>Equipo local</label>
+            <select name="id_equipo_local" required>
+                {% for e in equipos %}<option value="{{ e._id }}">{{ e.nombre_equipo }}</option>{% endfor %}
+            </select>
+            <label>Equipo visitante</label>
+            <select name="id_equipo_visitante" required>
+                {% for e in equipos %}<option value="{{ e._id }}">{{ e.nombre_equipo }}</option>{% endfor %}
+            </select>
+            <label>Estadio</label>
+            <select name="id_estadio">
+                {% for s in estadios %}<option value="{{ s._id }}">{{ s.nombre }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary btn-block">PROGRAMAR</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Partidos programados</h2>
+        {% for p in partidos %}
+        <div class="card">
+            <p><strong>{{ p.equipo_local_info.nombre_equipo if p.equipo_local_info else '???' }}</strong> vs
+               <strong>{{ p.equipo_visitante_info.nombre_equipo if p.equipo_visitante_info else '???' }}</strong></p>
+            <p class="text-muted">{{ p.fecha }} · {{ p.hora }} · {{ p.fase }}</p>
+            <form method="POST" action="{{ url_for('admin_actualizar_resultado', partido_id=p._id) }}" class="form-inline">
+                <input type="number" name="goles_local" placeholder="GL" min="0" style="width:60px">
+                <input type="number" name="goles_visitante" placeholder="GV" min="0" style="width:60px">
+                <button type="submit" class="btn btn-secondary btn-sm">Actualizar resultado</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="empty-state">No hay partidos.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

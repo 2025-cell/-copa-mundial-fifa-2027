@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Partidos{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Calendario de partidos</h1>
+
+<div class="lista-partidos">
+    {% for p in partidos %}
+    <div class="fila-partido">
+        <span class="badge">{{ p.fase }}</span>
+        <div class="equipo-vs">
+            <span>{{ p.equipo_local_info.nombre_equipo if p.equipo_local_info else '???' }}</span>
+            <span class="vs">
+                {% if p.resultado %}
+                    {{ p.resultado.goles_local }} - {{ p.resultado.goles_visitante }}
+                {% else %}
+                    VS
+                {% endif %}
+            </span>
+            <span>{{ p.equipo_visitante_info.nombre_equipo if p.equipo_visitante_info else '???' }}</span>
+        </div>
+        <span class="partido-fecha">{{ p.fecha }} · {{ p.hora }}</span>
+    </div>
+    {% else %}
+    <p class="empty-state">No hay partidos programados.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

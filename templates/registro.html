@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrarse — Copa Mundial FIFA 2027</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-body">
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <a href="{{ url_for('login') }}" class="back-link">← Volver</a>
+        <h1>REGISTRARSE</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for categoria, mensaje in messages %}
+                    <div class="alerta alerta-{{ categoria }}">{{ mensaje }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('registro') }}" class="auth-form">
+            <label>Nombre completo</label>
+            <input type="text" name="nombre" placeholder="Nombre y apellido" required>
+
+            <label>Correo electrónico</label>
+            <input type="email" name="correo" placeholder="tucorreo@ejemplo.com" required>
+
+            <label>Contraseña</label>
+            <input type="password" name="contrasena" placeholder="••••••••" required minlength="6">
+
+            <label>Confirmar contraseña</label>
+            <input type="password" name="confirmar_contrasena" placeholder="••••••••" required minlength="6">
+
+            <label>Fecha de nacimiento</label>
+            <input type="date" name="fecha_nacimiento" required>
+            <small class="auth-hint">Debes ser mayor de 18 años para acceder al apartado de apuestas.</small>
+
+            <button type="submit" class="btn btn-primary btn-block">REGISTRAR</button>
+        </form>
+
+        <p class="auth-footer-text">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Iniciar sesión</a></p>
+    </div>
+</div>
+
+</body>
+</html>

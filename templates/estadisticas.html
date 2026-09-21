@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Estadísticas{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Tabla de posiciones</h1>
+
+<table class="tabla-estadisticas">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Equipo</th>
+            <th>PJ</th>
+            <th>G</th>
+            <th>E</th>
+            <th>P</th>
+            <th>GF</th>
+            <th>GC</th>
+            <th>PTS</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for fila in tabla %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ fila.nombre_equipo }}</td>
+            <td>{{ fila.partidos_jugados }}</td>
+            <td>{{ fila.victorias }}</td>
+            <td>{{ fila.empates }}</td>
+            <td>{{ fila.derrotas }}</td>
+            <td>{{ fila.goles_favor }}</td>
+            <td>{{ fila.goles_contra }}</td>
+            <td><strong>{{ fila.puntos }}</strong></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="empty-state">No hay estadísticas disponibles.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

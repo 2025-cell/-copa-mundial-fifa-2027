@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Mi perfil</h1>
+
+<div class="perfil-card">
+    <div class="avatar-placeholder">👤</div>
+    <form method="POST" class="form-card">
+        <label>Nombre</label>
+        <input type="text" name="nombre" value="{{ usuario.nombre }}" required>
+
+        <label>Correo</label>
+        <input type="email" name="correo" value="{{ usuario.correo }}" required>
+
+        <label>Nueva contraseña</label>
+        <input type="password" name="nueva_contrasena" placeholder="Dejar en blanco para no cambiarla">
+
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" name="confirmar_contrasena" placeholder="Repite la nueva contraseña">
+
+        <label>Fecha de nacimiento</label>
+        <input type="text" value="{{ usuario.fecha_nacimiento }}" disabled>
+
+        <label>Miembro desde</label>
+        <input type="text" value="{{ usuario.fecha_registro.strftime('%d/%m/%Y') if usuario.fecha_registro }}" disabled>
+
+        <button type="submit" class="btn btn-primary">GUARDAR CAMBIOS</button>
+    </form>
+</div>
+
+{% endblock %}

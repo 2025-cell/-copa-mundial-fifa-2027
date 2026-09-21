@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Noticias{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Noticias</h1>
+
+<div class="grid grid-3">
+    {% for n in noticias %}
+    <div class="card">
+        <h3>{{ n.titulo }}</h3>
+        <p>{{ n.descripcion }}</p>
+        <small class="text-muted">{{ n.fecha_publicacion.strftime('%d/%m/%Y') if n.fecha_publicacion }}</small>
+    </div>
+    {% else %}
+    <p class="empty-state">No hay noticias disponibles.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

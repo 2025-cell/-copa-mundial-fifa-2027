@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Inicio — Copa Mundial FIFA 2027{% endblock %}
+{% block content %}
+
+<div class="hero">
+    <h1>COPA MUNDIAL FIFA 2027</h1>
+    <p>El Mundo, Un Solo Juego</p>
+</div>
+
+<section class="section">
+    <div class="section-header">
+        <h2>Últimas noticias</h2>
+        <a href="{{ url_for('noticias') }}" class="link-ver-mas">Ver todas →</a>
+    </div>
+    <div class="grid grid-3">
+        {% for n in noticias %}
+        <div class="card">
+            <h3>{{ n.titulo }}</h3>
+            <p>{{ n.descripcion[:120] }}{% if n.descripcion|length > 120 %}...{% endif %}</p>
+        </div>
+        {% else %}
+        <p class="empty-state">Aún no hay noticias publicadas.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-header">
+        <h2>Próximos partidos</h2>
+        <a href="{{ url_for('partidos') }}" class="link-ver-mas">Ver calendario completo →</a>
+    </div>
+    <div class="grid grid-3">
+        {% for p in partidos %}
+        <div class="card card-partido">
+            <span class="badge">{{ p.fase }}</span>
+            <p class="partido-fecha">{{ p.fecha }} — {{ p.hora }}</p>
+        </div>
+        {% else %}
+        <p class="empty-state">No hay partidos programados aún.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section grid grid-5">
+    <a href="{{ url_for('noticias') }}" class="menu-tile">📰 Noticias</a>
+    <a href="{{ url_for('partidos') }}" class="menu-tile">📅 Partidos</a>
+    <a href="{{ url_for('equipos') }}" class="menu-tile">🛡️ Equipos</a>
+    <a href="{{ url_for('estadisticas') }}" class="menu-tile">📊 Estadísticas</a>
+    <a href="{{ url_for('apuestas') }}" class="menu-tile">💰 Apuestas</a>
+</section>
+
+{% endblock %}
