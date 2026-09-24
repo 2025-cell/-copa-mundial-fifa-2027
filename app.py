@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime, date
 import os
+import certifi
 
 app = Flask(__name__)
 app.secret_key = "copa_mundial_fifa_2027_secret_key_cambia_esto"
@@ -15,7 +16,7 @@ ADMIN_PASSWORD = "12345678"
 # Reemplaza con tu URI de MongoDB Atlas
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://gueg091009hmczsla0_db_user:elviejo@cluster0.a7rdoev.mongodb.net/copa_mundial_fifa?retryWrites=true&w=majority&appName=Cluster0")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = client["copa_mundial_fifa"]
 
 usuarios_col = db["usuarios"]

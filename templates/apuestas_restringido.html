@@ -1,11 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Apuestas — Acceso restringido{% endblock %}
+{% block title %}Apuestas — Verificación{% endblock %}
 {% block content %}
 
 <div class="aviso-restriccion">
-    <h1>⚠️ Acceso restringido</h1>
-    <p>El apartado de apuestas es exclusivo para mayores de 18 años.</p>
-    <p>Debes tener 18 años o más para continuar. Juega responsablemente.</p>
+    <h1>🔒 Verificación requerida</h1>
+    <p>Para acceder a las apuestas necesitamos tu CURP y que confirmes que eres mayor de edad.</p>
+
+    <form method="POST" action="{{ url_for('apuestas') }}" class="form-card" style="max-width:400px; margin:20px auto 0;">
+        <input type="hidden" name="accion" value="verificar_curp">
+
+        <label>CURP</label>
+        <input type="text" name="curp" placeholder="Ej. GOMJ990101HDFXXX01" maxlength="18" required style="text-transform:uppercase;">
+
+        <label class="checkbox-label" style="margin-top:14px;">
+            <input type="checkbox" name="declara_mayor_edad">
+            Declaro bajo protesta de decir verdad que soy mayor de 18 años.
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">VERIFICAR Y CONTINUAR</button>
+    </form>
 </div>
 
 {% endblock %}
