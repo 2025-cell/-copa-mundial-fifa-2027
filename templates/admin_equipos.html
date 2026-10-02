@@ -1,40 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Admin — Equipos{% endblock %}
+{% block title %}Admin — Apuestas{% endblock %}
 {% block content %}
 
 <a href="{{ url_for('admin_dashboard') }}" class="back-link">← Panel de administración</a>
-<h1 class="page-title">Gestión de equipos</h1>
+<h1 class="page-title">Apuestas registradas</h1>
 
-<div class="grid-2col">
-    <div>
-        <h2>Nuevo equipo</h2>
-        <form method="POST" class="form-card">
-            <label>Nombre del equipo</label>
-            <input type="text" name="nombre_equipo" required>
-            <label>País</label>
-            <input type="text" name="pais" required>
-            <label>Entrenador</label>
-            <input type="text" name="entrenador" required>
-            <label>Grupo</label>
-            <select name="grupo" required>
-                {% for g in ['A','B','C','D','E','F','G','H'] %}
-                <option value="{{ g }}">Grupo {{ g }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn btn-primary btn-block">AGREGAR EQUIPO</button>
-        </form>
-    </div>
-    <div>
-        <h2>Equipos registrados</h2>
-        {% for e in equipos %}
-        <div class="card">
-            <h3>{{ e.nombre_equipo }}</h3>
-            <p class="text-muted">{{ e.pais }} · Grupo {{ e.grupo }} · DT: {{ e.entrenador }}</p>
-        </div>
-        {% else %}
-        <p class="empty-state">No hay equipos.</p>
-        {% endfor %}
-    </div>
+<div class="stat-box" style="max-width:220px; margin-bottom:20px;">
+    <span>${{ total_apostado }}</span>Total apostado
 </div>
+
+<table class="tabla-estadisticas">
+    <thead>
+        <tr><th>Usuario</th><th>Partido</th><th>Tipo</th><th>Predicción</th><th>Cantidad</th><th>Fecha</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+        {% for a in apuestas %}
+        <tr>
+            <td>{{ a.usuario_info.nombre if a.usuario_info else 'Desconocido' }}</td>
+            <td>
+                {% if a.partido_info %}
+                    {{ a.partido_info.equipo_local_info.nombre_equipo if a.partido_info.equipo_local_info else '???' }}
+                    vs
+                    {{ a.partido_info.equipo_visitante_info.nombre_equipo if a.partido_info.equipo_visitante_info else '???' }}
+                {% else %}
+                    Partido eliminado
+                {% endif %}
+            </td>
+            <td>{{ a.tipo_apuesta }}</td>
+            <td>{{ a.prediccion }}</td>
+            <td>${{ a.cantidad }}</td>
+            <td>{{ a.fecha_apuesta.strftime('%d/%m/%Y') if a.fecha_apuesta }}</td>
+            <td>
+                <a href="{{ url_for('admin_eliminar_apuesta', apuesta_id=a._id) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta apuesta?');">Eliminar</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state">No hay apuestas registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}
