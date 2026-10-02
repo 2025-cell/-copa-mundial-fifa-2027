@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Editar partido{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_partidos') }}" class="back-link">← Gestión de partidos</a>
+<h1 class="page-title">Editar partido</h1>
+
+<form method="POST" class="form-card" style="max-width:420px;">
+    <label>Fecha</label>
+    <input type="date" name="fecha" value="{{ partido.fecha }}" required>
+    <label>Hora</label>
+    <input type="time" name="hora" value="{{ partido.hora }}" required>
+    <label>Fase</label>
+    <select name="fase" required>
+        {% for f in ['Fase de grupos','Octavos de final','Cuartos de final','Semifinal','Final'] %}
+        <option {% if partido.fase == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+    </select>
+    <label>Equipo local</label>
+    <select name="id_equipo_local" required>
+        {% for e in equipos %}
+        <option value="{{ e._id }}" {% if partido.id_equipo_local == e._id %}selected{% endif %}>{{ e.nombre_equipo }}</option>
+        {% endfor %}
+    </select>
+    <label>Equipo visitante</label>
+    <select name="id_equipo_visitante" required>
+        {% for e in equipos %}
+        <option value="{{ e._id }}" {% if partido.id_equipo_visitante == e._id %}selected{% endif %}>{{ e.nombre_equipo }}</option>
+        {% endfor %}
+    </select>
+    <label>Estadio</label>
+    <select name="id_estadio">
+        {% for s in estadios %}
+        <option value="{{ s._id }}" {% if partido.id_estadio == s._id %}selected{% endif %}>{{ s.nombre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-block">GUARDAR CAMBIOS</button>
+</form>
+
+{% endblock %}
