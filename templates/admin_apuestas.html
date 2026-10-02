@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin — Apuestas{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_dashboard') }}" class="back-link">← Panel de administración</a>
+<h1 class="page-title">Apuestas registradas</h1>
+
+<div class="stat-box" style="max-width:220px; margin-bottom:20px;">
+    <span>${{ total_apostado }}</span>Total apostado
+</div>
+
+<table class="tabla-estadisticas">
+    <thead>
+        <tr><th>Usuario</th><th>Partido</th><th>Tipo</th><th>Predicción</th><th>Cantidad</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+        {% for a in apuestas %}
+        <tr>
+            <td>{{ a.usuario_info.nombre if a.usuario_info else 'Desconocido' }}</td>
+            <td>
+                {% if a.partido_info %}
+                    {{ a.partido_info.equipo_local_info.nombre_equipo if a.partido_info.equipo_local_info else '???' }}
+                    vs
+                    {{ a.partido_info.equipo_visitante_info.nombre_equipo if a.partido_info.equipo_visitante_info else '???' }}
+                {% else %}
+                    Partido eliminado
+                {% endif %}
+            </td>
+            <td>{{ a.tipo_apuesta }}</td>
+            <td>{{ a.prediccion }}</td>
+            <td>${{ a.cantidad }}</td>
+            <td>
+                {% if a.estado == 'ganada' %}
+                    <span style="color:#1e7a34; font-weight:700;">✅ Ganada</span>
+                {% elif a.estado == 'perdida' %}
+                    <span style="color:#b3261e; font-weight:700;">❌ Perdida</span>
+                {% else %}
+                    <span style="color:#6b7280;">⏳ Pendiente</span>
+                {% endif %}
+            </td>
+            <td>{{ a.fecha_apuesta.strftime('%d/%m/%Y') if a.fecha_apuesta }}</td>
+            <td>
+                <a href="{{ url_for('admin_eliminar_apuesta', apuesta_id=a._id) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta apuesta?');">Eliminar</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-state">No hay apuestas registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
