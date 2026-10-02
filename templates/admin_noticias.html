@@ -22,7 +22,10 @@
         <div class="card">
             <h3>{{ n.titulo }}</h3>
             <p>{{ n.descripcion[:100] }}...</p>
-            <a href="{{ url_for('admin_eliminar_noticia', noticia_id=n._id) }}" class="btn btn-danger btn-sm">Eliminar</a>
+            <div class="form-inline">
+                <a href="{{ url_for('admin_editar_noticia', noticia_id=n._id) }}" class="btn btn-secondary btn-sm">Editar</a>
+                <a href="{{ url_for('admin_eliminar_noticia', noticia_id=n._id) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta noticia?');">Eliminar</a>
+            </div>
         </div>
         {% else %}
         <p class="empty-state">No hay noticias.</p>
