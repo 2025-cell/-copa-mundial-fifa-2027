@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Editar usuario{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_usuarios') }}" class="back-link">← Usuarios registrados</a>
+<h1 class="page-title">Editar usuario</h1>
+
+<form method="POST" class="form-card" style="max-width:420px;">
+    <label>Nombre</label>
+    <input type="text" name="nombre" value="{{ usuario.nombre }}" required>
+
+    <label>Correo</label>
+    <input type="email" name="correo" value="{{ usuario.correo }}" required>
+
+    <label>Rol</label>
+    <select name="rol" required>
+        <option value="usuario" {% if usuario.rol == 'usuario' %}selected{% endif %}>Usuario</option>
+        <option value="admin" {% if usuario.rol == 'admin' %}selected{% endif %}>Administrador</option>
+    </select>
+
+    <label class="checkbox-label" style="margin-top:14px;">
+        <input type="checkbox" name="es_mayor_edad" {% if usuario.es_mayor_edad %}checked{% endif %}>
+        Mayor de edad (habilita el módulo de apuestas)
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-block">GUARDAR CAMBIOS</button>
+</form>
+
+{% endblock %}
