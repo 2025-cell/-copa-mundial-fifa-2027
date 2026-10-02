@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 from datetime import datetime, date
 import os
 import random
+import re
 
 app = Flask(__name__)
 app.secret_key = "copa_mundial_fifa_2027_secret_key_cambia_esto"
@@ -77,6 +78,103 @@ def entero_seguro(valor, default=0):
         return int(valor)
     except (TypeError, ValueError):
         return default
+
+
+def ajustar_estadisticas(id_equipo_local, id_equipo_visitante, goles_local, goles_visitante, signo=1):
+    """Suma (signo=1) o resta (signo=-1) el efecto de un resultado en las estadísticas de ambos equipos."""
+    if goles_local > goles_visitante:
+        resultado_local, resultado_visitante = "victoria", "derrota"
+    elif goles_local < goles_visitante:
+        resultado_local, resultado_visitante = "derrota", "victoria"
+    else:
+        resultado_local = resultado_visitante = "empate"
+
+    ajustes = {
+        "victoria": {"victorias": 1, "empates": 0, "derrotas": 0},
+        "empate": {"victorias": 0, "empates": 1, "derrotas": 0},
+        "derrota": {"victorias": 0, "empates": 0, "derrotas": 1},
+    }
+
+    for id_equipo, goles_favor, goles_contra, tipo in [
+        (id_equipo_local, goles_local, goles_visitante, resultado_local),
+        (id_equipo_visitante, goles_visitante, goles_local, resultado_visitante),
+    ]:
+        if not id_equipo:
+            continue
+        ajuste = ajustes[tipo]
+        estadisticas_col.update_one(
+            {"id_equipo": id_equipo},
+            {"$inc": {
+                "partidos_jugados": 1 * signo,
+                "goles_favor": goles_favor * signo,
+                "goles_contra": goles_contra * signo,
+                "victorias": ajuste["victorias"] * signo,
+                "empates": ajuste["empates"] * signo,
+                "derrotas": ajuste["derrotas"] * signo,
+            }},
+            upsert=True,
+        )
+
+
+def evaluar_apuestas_partido(partido_id, partido, goles_local, goles_visitante):
+    """Marca cada apuesta de ese partido como 'ganada', 'perdida' o 'pendiente'."""
+    equipo_local = equipos_col.find_one({"_id": partido.get("id_equipo_local")})
+    equipo_visitante = equipos_col.find_one({"_id": partido.get("id_equipo_visitante")})
+    nombre_local = (equipo_local or {}).get("nombre_equipo", "")
+    nombre_visitante = (equipo_visitante or {}).get("nombre_equipo", "")
+
+    if goles_local > goles_visitante:
+        ganador = nombre_local
+    elif goles_visitante > goles_local:
+        ganador = nombre_visitante
+    else:
+        ganador = "empate"
+
+    for apuesta in apuestas_col.find({"id_partido": ObjectId(partido_id)}):
+        prediccion = (apuesta.get("prediccion") or "").lower()
+        tipo = apuesta.get("tipo_apuesta")
+        estado = "pendiente"
+
+        if tipo == "ganador":
+            if ganador == "empate":
+                estado = "ganada" if "empate" in prediccion else "perdida"
+            else:
+                estado = "ganada" if ganador.lower() in prediccion else "perdida"
+
+        elif tipo == "marcador_exacto":
+            numeros = re.findall(r"\d+", prediccion)
+            if len(numeros) >= 2:
+                pred_local, pred_visitante = int(numeros[0]), int(numeros[1])
+                estado = "ganada" if (pred_local == goles_local and pred_visitante == goles_visitante) else "perdida"
+        # tipo "goleador": no hay datos de goleadores en el sistema, queda "pendiente"
+
+        apuestas_col.update_one({"_id": apuesta["_id"]}, {"$set": {"estado": estado}})
+
+
+def guardar_resultado(partido_id, goles_local, goles_visitante):
+    """Guarda el marcador, recalcula estadísticas y evalúa apuestas.
+    Revierte el resultado anterior si existía, para no duplicar victorias/goles."""
+    partido = partidos_col.find_one({"_id": ObjectId(partido_id)})
+    if not partido:
+        return False
+
+    resultado_anterior = resultados_col.find_one({"id_partido": ObjectId(partido_id)})
+    if resultado_anterior:
+        ajustar_estadisticas(
+            partido.get("id_equipo_local"), partido.get("id_equipo_visitante"),
+            resultado_anterior.get("goles_local", 0), resultado_anterior.get("goles_visitante", 0),
+            signo=-1,
+        )
+
+    resultados_col.update_one(
+        {"id_partido": ObjectId(partido_id)},
+        {"$set": {"id_partido": ObjectId(partido_id), "goles_local": goles_local, "goles_visitante": goles_visitante}},
+        upsert=True,
+    )
+
+    ajustar_estadisticas(partido.get("id_equipo_local"), partido.get("id_equipo_visitante"), goles_local, goles_visitante, signo=1)
+    evaluar_apuestas_partido(partido_id, partido, goles_local, goles_visitante)
+    return True
 
 
 @app.context_processor
@@ -627,16 +725,10 @@ def admin_actualizar_resultado(partido_id):
     goles_local = entero_seguro(request.form.get("goles_local"), 0)
     goles_visitante = entero_seguro(request.form.get("goles_visitante"), 0)
 
-    resultados_col.update_one(
-        {"id_partido": ObjectId(partido_id)},
-        {"$set": {
-            "id_partido": ObjectId(partido_id),
-            "goles_local": goles_local,
-            "goles_visitante": goles_visitante,
-        }},
-        upsert=True,
-    )
-    flash("Resultado actualizado.", "success")
+    if guardar_resultado(partido_id, goles_local, goles_visitante):
+        flash("Resultado actualizado. Estadísticas y apuestas recalculadas.", "success")
+    else:
+        flash("Partido no encontrado.", "error")
     return redirect(url_for("admin_partidos"))
 
 
@@ -647,16 +739,10 @@ def admin_resultado_aleatorio(partido_id):
     goles_local = random.randint(0, 5)
     goles_visitante = random.randint(0, 5)
 
-    resultados_col.update_one(
-        {"id_partido": ObjectId(partido_id)},
-        {"$set": {
-            "id_partido": ObjectId(partido_id),
-            "goles_local": goles_local,
-            "goles_visitante": goles_visitante,
-        }},
-        upsert=True,
-    )
-    flash(f"Resultado aleatorio generado: {goles_local} - {goles_visitante}.", "success")
+    if guardar_resultado(partido_id, goles_local, goles_visitante):
+        flash(f"Resultado aleatorio generado: {goles_local} - {goles_visitante}. Estadísticas y apuestas recalculadas.", "success")
+    else:
+        flash("Partido no encontrado.", "error")
     return redirect(url_for("admin_partidos"))
 
 
