@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Editar equipo{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('admin_equipos') }}" class="back-link">← Gestión de equipos</a>
+<h1 class="page-title">Editar equipo</h1>
+
+<form method="POST" class="form-card" style="max-width:420px;">
+    <label>Nombre del equipo</label>
+    <input type="text" name="nombre_equipo" value="{{ equipo.nombre_equipo }}" required>
+    <label>País</label>
+    <input type="text" name="pais" value="{{ equipo.pais }}" required>
+    <label>Entrenador</label>
+    <input type="text" name="entrenador" value="{{ equipo.entrenador }}" required>
+    <label>Grupo</label>
+    <select name="grupo" required>
+        {% for g in ['A','B','C','D','E','F','G','H'] %}
+        <option value="{{ g }}" {% if equipo.grupo == g %}selected{% endif %}>Grupo {{ g }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-block">GUARDAR CAMBIOS</button>
+</form>
+
+{% endblock %}
