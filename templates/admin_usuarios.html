@@ -7,7 +7,7 @@
 
 <table class="tabla-estadisticas">
     <thead>
-        <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Mayor de edad</th><th>Registro</th></tr>
+        <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Mayor de edad</th><th>Registro</th><th>Acciones</th></tr>
     </thead>
     <tbody>
         {% for u in usuarios %}
@@ -17,9 +17,13 @@
             <td>{{ u.rol }}</td>
             <td>{{ "Sí" if u.es_mayor_edad else "No" }}</td>
             <td>{{ u.fecha_registro.strftime('%d/%m/%Y') if u.fecha_registro }}</td>
+            <td>
+                <a href="{{ url_for('admin_editar_usuario', usuario_id=u._id) }}" class="btn btn-secondary btn-sm">Editar</a>
+                <a href="{{ url_for('admin_eliminar_usuario', usuario_id=u._id) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.');">Eliminar</a>
+            </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="empty-state">No hay usuarios registrados.</td></tr>
+        <tr><td colspan="6" class="empty-state">No hay usuarios registrados.</td></tr>
         {% endfor %}
     </tbody>
 </table>
