@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime, date
 import os
-import certifi
+import random
 
 app = Flask(__name__)
 app.secret_key = "copa_mundial_fifa_2027_secret_key_cambia_esto"
@@ -13,10 +13,9 @@ app.secret_key = "copa_mundial_fifa_2027_secret_key_cambia_esto"
 ADMIN_PASSWORD = "12345678"
 
 # ================== CONEXIÓN A MONGODB ==================
-# Reemplaza con tu URI de MongoDB Atlas
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://gueg091009hmczsla0_db_user:elviejo@cluster0.a7rdoev.mongodb.net/copa_mundial_fifa?retryWrites=true&w=majority&appName=Cluster0")
 
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+client = MongoClient(MONGO_URI)
 db = client["copa_mundial_fifa"]
 
 usuarios_col = db["usuarios"]
@@ -34,50 +33,24 @@ boletos_col = db["boletos"]
 
 
 # ================== FOTOS DE JUGADORES PARA EL LOGIN ==================
-# Jugadores jóvenes destacados usados como fondo/carrusel decorativo en login
 JUGADORES_LOGIN = [
-    {"nombre": "Jude Bellingham", "pais": "Inglaterra", "img": "/static/img/imagen1.png"},
-    {"nombre": "Lamine Yamal", "pais": "España", "img": "/static/img/imagen2.png"},
-    {"nombre": "Jamal Musiala", "pais": "Alemania", "img": "/static/img/imagen3.png"},
-    {"nombre": "Endrick", "pais": "Brasil", "img": "/static/img/imagen4.png"},
-    {"nombre": "Pedri González", "pais": "España", "img": "/static/img/imagen5.png"},
+    {"nombre": "Jude Bellingham", "pais": "Inglaterra", "img": "/static/img/imagen1.png", "pos": "center"},
+    {"nombre": "Lamine Yamal", "pais": "España", "img": "/static/img/imagen2.png", "pos": "center"},
+    {"nombre": "Jamal Musiala", "pais": "Alemania", "img": "/static/img/imagen3.png", "pos": "center"},
+    {"nombre": "Endrick", "pais": "Brasil", "img": "/static/img/imagen4.png", "pos": "top"},
+    {"nombre": "Pedri González", "pais": "España", "img": "/static/img/imagen5.png", "pos": "30% 20%"},
 ]
-
 
 # ================== CÓDIGOS ISO DE PAÍS POR EQUIPO (para banderas por imagen) ==================
 CODIGOS_PAIS = {
-    "Brasil": "br",
-    "Argentina": "ar",
-    "Uruguay": "uy",
-    "Ecuador": "ec",
-    "Francia": "fr",
-    "Alemania": "de",
-    "España": "es",
-    "Inglaterra": "gb-eng",
-    "Portugal": "pt",
-    "Países Bajos": "nl",
-    "Bélgica": "be",
-    "Croacia": "hr",
-    "Italia": "it",
-    "Suiza": "ch",
-    "Dinamarca": "dk",
-    "Polonia": "pl",
-    "México": "mx",
-    "Estados Unidos": "us",
-    "Canadá": "ca",
-    "Costa Rica": "cr",
-    "Japón": "jp",
-    "Corea del Sur": "kr",
-    "Australia": "au",
-    "Arabia Saudita": "sa",
-    "Marruecos": "ma",
-    "Senegal": "sn",
-    "Nigeria": "ng",
-    "Ghana": "gh",
-    "Colombia": "co",
-    "Chile": "cl",
-    "Paraguay": "py",
-    "Perú": "pe",
+    "Brasil": "br", "Argentina": "ar", "Uruguay": "uy", "Ecuador": "ec",
+    "Francia": "fr", "Alemania": "de", "España": "es", "Inglaterra": "gb-eng",
+    "Portugal": "pt", "Países Bajos": "nl", "Bélgica": "be", "Croacia": "hr",
+    "Italia": "it", "Suiza": "ch", "Dinamarca": "dk", "Polonia": "pl",
+    "México": "mx", "Estados Unidos": "us", "Canadá": "ca", "Costa Rica": "cr",
+    "Japón": "jp", "Corea del Sur": "kr", "Australia": "au", "Arabia Saudita": "sa",
+    "Marruecos": "ma", "Senegal": "sn", "Nigeria": "ng", "Ghana": "gh",
+    "Colombia": "co", "Chile": "cl", "Paraguay": "py", "Perú": "pe",
 }
 
 
@@ -96,6 +69,14 @@ def es_mayor_edad(fecha_nacimiento_str):
         return edad >= 18
     except Exception:
         return False
+
+
+def entero_seguro(valor, default=0):
+    """Convierte a entero de forma segura; si viene vacío o inválido, usa el valor por defecto."""
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return default
 
 
 @app.context_processor
@@ -117,7 +98,6 @@ def login():
     if request.method == "POST":
         correo = request.form.get("correo", "").strip().lower()
         contrasena = request.form.get("contrasena", "")
-
         usuario = usuarios_col.find_one({"correo": correo})
         if usuario and check_password_hash(usuario["contrasena"], contrasena):
             session["usuario_id"] = str(usuario["_id"])
@@ -126,23 +106,19 @@ def login():
             return redirect(url_for("home"))
         else:
             flash("Correo o contraseña incorrectos.", "error")
-
     return render_template("login.html", jugadores=JUGADORES_LOGIN)
 
 
 @app.route("/admin-login", methods=["POST"])
 def admin_login():
     contrasena = request.form.get("contrasena_admin", "")
-
     if contrasena != ADMIN_PASSWORD:
         flash("Contraseña de administrador incorrecta.", "error")
         return redirect(url_for("login"))
-
     admin_user = usuarios_col.find_one({"rol": "admin"})
     if not admin_user:
         flash("Aún no existe una cuenta admin. Visita /setup-admin primero.", "error")
         return redirect(url_for("login"))
-
     session["usuario_id"] = str(admin_user["_id"])
     session["nombre"] = admin_user["nombre"]
     flash("Acceso de administrador concedido.", "success")
@@ -156,19 +132,15 @@ def registro():
         correo = request.form.get("correo", "").strip().lower()
         contrasena = request.form.get("contrasena", "")
         edad_nacimiento = request.form.get("fecha_nacimiento", "")
-
         if usuarios_col.find_one({"correo": correo}):
             flash("Ya existe una cuenta con ese correo.", "error")
             return redirect(url_for("registro"))
-
         confirmar_contrasena = request.form.get("confirmar_contrasena", "")
         if contrasena != confirmar_contrasena:
             flash("Las contraseñas no coinciden.", "error")
             return redirect(url_for("registro"))
-
         nuevo_usuario = {
-            "nombre": nombre,
-            "correo": correo,
+            "nombre": nombre, "correo": correo,
             "contrasena": generate_password_hash(contrasena),
             "fecha_nacimiento": edad_nacimiento,
             "es_mayor_edad": es_mayor_edad(edad_nacimiento),
@@ -181,7 +153,6 @@ def registro():
         session["nombre"] = nombre
         flash("Registro exitoso. ¡Bienvenido!", "success")
         return redirect(url_for("home"))
-
     return render_template("registro.html")
 
 
@@ -194,14 +165,12 @@ def logout():
 
 def login_requerido(func):
     from functools import wraps
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not usuario_actual():
             flash("Debes iniciar sesión para continuar.", "error")
             return redirect(url_for("login"))
         return func(*args, **kwargs)
-
     return wrapper
 
 
@@ -293,35 +262,27 @@ def patrocinadores():
 @login_requerido
 def boletos():
     usuario = usuario_actual()
-
     if request.method == "POST":
         id_partido = request.form.get("id_partido")
         tipo_boleto = request.form.get("tipo_boleto")
-        cantidad = int(request.form.get("cantidad", 1))
-
+        cantidad = entero_seguro(request.form.get("cantidad"), 1)
         precios = {"General": 800, "Preferente": 1500, "VIP": 3500}
         boletos_col.insert_one({
-            "id_usuario": usuario["_id"],
-            "id_partido": ObjectId(id_partido),
-            "tipo_boleto": tipo_boleto,
-            "cantidad": cantidad,
+            "id_usuario": usuario["_id"], "id_partido": ObjectId(id_partido),
+            "tipo_boleto": tipo_boleto, "cantidad": cantidad,
             "precio_unitario": precios.get(tipo_boleto, 800),
             "total": precios.get(tipo_boleto, 800) * cantidad,
             "fecha_compra": datetime.utcnow(),
         })
         flash("Boletos comprados correctamente.", "success")
         return redirect(url_for("boletos"))
-
     partidos_disponibles = list(partidos_col.find())
     for p in partidos_disponibles:
         p["equipo_local_info"] = equipos_col.find_one({"_id": p.get("id_equipo_local")})
         p["equipo_visitante_info"] = equipos_col.find_one({"_id": p.get("id_equipo_visitante")})
-
     mis_boletos = list(boletos_col.find({"id_usuario": usuario["_id"]}).sort("fecha_compra", -1))
     for b in mis_boletos:
-        partido = partidos_col.find_one({"_id": b.get("id_partido")})
-        b["partido_info"] = partido
-
+        b["partido_info"] = partidos_col.find_one({"_id": b.get("id_partido")})
     return render_template("boletos.html", partidos=partidos_disponibles, mis_boletos=mis_boletos)
 
 
@@ -373,48 +334,34 @@ def estadisticas():
 def apuestas():
     usuario = usuario_actual()
 
-    # Paso 1: si todavía no verificó su CURP, se le pide antes de dejarlo apostar
     if not usuario.get("curp_verificado"):
         if request.method == "POST" and request.form.get("accion") == "verificar_curp":
             curp = request.form.get("curp", "").strip().upper()
             declara_mayor = request.form.get("declara_mayor_edad") == "on"
-
             if len(curp) != 18:
                 flash("El CURP debe tener 18 caracteres.", "error")
                 return redirect(url_for("apuestas"))
             if not declara_mayor:
                 flash("Debes declarar que eres mayor de edad para continuar.", "error")
                 return redirect(url_for("apuestas"))
-
             usuarios_col.update_one(
                 {"_id": usuario["_id"]},
-                {"$set": {
-                    "curp": curp,
-                    "curp_verificado": True,
-                    "es_mayor_edad": True,
-                }},
+                {"$set": {"curp": curp, "curp_verificado": True, "es_mayor_edad": True}},
             )
             flash("Verificación completada. Ya puedes apostar.", "success")
             return redirect(url_for("apuestas"))
-
         return render_template("apuestas_verificacion.html")
 
-    # Paso 2: ya verificado, puede apostar normalmente
     if request.method == "POST" and request.form.get("accion") == "apostar":
         id_partido = request.form.get("id_partido")
         tipo_apuesta = request.form.get("tipo_apuesta")
         prediccion = request.form.get("prediccion")
-        cantidad = float(request.form.get("cantidad", 0))
-
-        nueva_apuesta = {
-            "id_usuario": usuario["_id"],
-            "id_partido": ObjectId(id_partido),
-            "tipo_apuesta": tipo_apuesta,
-            "prediccion": prediccion,
-            "cantidad": cantidad,
+        cantidad = float(request.form.get("cantidad", 0) or 0)
+        apuestas_col.insert_one({
+            "id_usuario": usuario["_id"], "id_partido": ObjectId(id_partido),
+            "tipo_apuesta": tipo_apuesta, "prediccion": prediccion, "cantidad": cantidad,
             "fecha_apuesta": datetime.utcnow(),
-        }
-        apuestas_col.insert_one(nueva_apuesta)
+        })
         flash("Apuesta registrada correctamente.", "success")
         return redirect(url_for("apuestas"))
 
@@ -422,7 +369,6 @@ def apuestas():
     for p in partidos_disponibles:
         p["equipo_local_info"] = equipos_col.find_one({"_id": p.get("id_equipo_local")})
         p["equipo_visitante_info"] = equipos_col.find_one({"_id": p.get("id_equipo_visitante")})
-
     mis_apuestas = list(apuestas_col.find({"id_usuario": usuario["_id"]}).sort("fecha_apuesta", -1))
     for a in mis_apuestas:
         partido = partidos_col.find_one({"_id": a.get("id_partido")})
@@ -430,7 +376,6 @@ def apuestas():
             partido["equipo_local_info"] = equipos_col.find_one({"_id": partido.get("id_equipo_local")})
             partido["equipo_visitante_info"] = equipos_col.find_one({"_id": partido.get("id_equipo_visitante")})
         a["partido_info"] = partido
-
     return render_template("apuestas.html", partidos=partidos_disponibles, mis_apuestas=mis_apuestas)
 
 
@@ -440,33 +385,24 @@ def apuestas():
 @login_requerido
 def perfil():
     usuario = usuario_actual()
-
     if request.method == "POST":
         nuevo_nombre = request.form.get("nombre", "").strip()
         nuevo_correo = request.form.get("correo", "").strip().lower()
         nueva_contrasena = request.form.get("nueva_contrasena", "")
         confirmar_contrasena = request.form.get("confirmar_contrasena", "")
-
         if nuevo_correo != usuario["correo"] and usuarios_col.find_one({"correo": nuevo_correo}):
             flash("Ese correo ya está en uso por otra cuenta.", "error")
             return redirect(url_for("perfil"))
-
-        cambios = {
-            "nombre": nuevo_nombre,
-            "correo": nuevo_correo,
-        }
-
+        cambios = {"nombre": nuevo_nombre, "correo": nuevo_correo}
         if nueva_contrasena:
             if nueva_contrasena != confirmar_contrasena:
                 flash("Las contraseñas nuevas no coinciden.", "error")
                 return redirect(url_for("perfil"))
             cambios["contrasena"] = generate_password_hash(nueva_contrasena)
-
         usuarios_col.update_one({"_id": usuario["_id"]}, {"$set": cambios})
         session["nombre"] = nuevo_nombre
         flash("Perfil actualizado.", "success")
         return redirect(url_for("perfil"))
-
     return render_template("perfil.html", usuario=usuario)
 
 
@@ -474,7 +410,6 @@ def perfil():
 
 def admin_requerido(func):
     from functools import wraps
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         usuario = usuario_actual()
@@ -482,7 +417,6 @@ def admin_requerido(func):
             flash("Acceso restringido a administradores.", "error")
             return redirect(url_for("home"))
         return func(*args, **kwargs)
-
     return wrapper
 
 
@@ -502,6 +436,8 @@ def admin_dashboard():
     )
 
 
+# ---------- Noticias (alta, edición, eliminación) ----------
+
 @app.route("/admin/noticias", methods=["GET", "POST"])
 @admin_requerido
 def admin_noticias():
@@ -514,9 +450,22 @@ def admin_noticias():
         })
         flash("Noticia publicada.", "success")
         return redirect(url_for("admin_noticias"))
-
     todas = list(noticias_col.find().sort("fecha_publicacion", -1))
     return render_template("admin_noticias.html", noticias=todas)
+
+
+@app.route("/admin/noticias/editar/<noticia_id>", methods=["GET", "POST"])
+@admin_requerido
+def admin_editar_noticia(noticia_id):
+    noticia = noticias_col.find_one({"_id": ObjectId(noticia_id)})
+    if request.method == "POST":
+        noticias_col.update_one({"_id": ObjectId(noticia_id)}, {"$set": {
+            "titulo": request.form.get("titulo"),
+            "descripcion": request.form.get("descripcion"),
+        }})
+        flash("Noticia actualizada.", "success")
+        return redirect(url_for("admin_noticias"))
+    return render_template("admin_editar_noticia.html", noticia=noticia)
 
 
 @app.route("/admin/noticias/eliminar/<noticia_id>")
@@ -526,6 +475,8 @@ def admin_eliminar_noticia(noticia_id):
     flash("Noticia eliminada.", "success")
     return redirect(url_for("admin_noticias"))
 
+
+# ---------- Equipos (alta, edición, eliminación) ----------
 
 @app.route("/admin/equipos", methods=["GET", "POST"])
 @admin_requerido
@@ -539,9 +490,7 @@ def admin_equipos():
         })
         flash("Equipo agregado.", "success")
         return redirect(url_for("admin_equipos"))
-
-    todos = list(equipos_col.find())
-    return render_template("admin_equipos.html", equipos=todos)
+    return render_template("admin_equipos.html", equipos=list(equipos_col.find()))
 
 
 @app.route("/admin/equipos/editar/<equipo_id>", methods=["GET", "POST"])
@@ -568,22 +517,22 @@ def admin_eliminar_equipo(equipo_id):
     return redirect(url_for("admin_equipos"))
 
 
+# ---------- Jugadores ----------
+
 @app.route("/admin/jugadores", methods=["GET", "POST"])
 @admin_requerido
 def admin_jugadores():
     equipos_lista = list(equipos_col.find())
-
     if request.method == "POST":
         jugadores_col.insert_one({
             "id_equipo": ObjectId(request.form.get("id_equipo")),
             "nombre": request.form.get("nombre"),
             "posicion": request.form.get("posicion"),
-            "numero_camiseta": int(request.form.get("numero_camiseta", 0)),
+            "numero_camiseta": entero_seguro(request.form.get("numero_camiseta")),
             "fecha_nacimiento": request.form.get("fecha_nacimiento"),
         })
         flash("Jugador agregado.", "success")
         return redirect(url_for("admin_jugadores"))
-
     todos = list(jugadores_col.find())
     for j in todos:
         j["equipo_info"] = equipos_col.find_one({"_id": j.get("id_equipo")})
@@ -598,6 +547,8 @@ def admin_eliminar_jugador(jugador_id):
     return redirect(url_for("admin_jugadores"))
 
 
+# ---------- Patrocinadores ----------
+
 @app.route("/admin/patrocinadores", methods=["GET", "POST"])
 @admin_requerido
 def admin_patrocinadores():
@@ -609,9 +560,7 @@ def admin_patrocinadores():
         })
         flash("Patrocinador agregado.", "success")
         return redirect(url_for("admin_patrocinadores"))
-
-    todos = list(patrocinadores_col.find())
-    return render_template("admin_patrocinadores.html", patrocinadores=todos)
+    return render_template("admin_patrocinadores.html", patrocinadores=list(patrocinadores_col.find()))
 
 
 @app.route("/admin/patrocinadores/eliminar/<patrocinador_id>")
@@ -621,6 +570,8 @@ def admin_eliminar_patrocinador(patrocinador_id):
     flash("Patrocinador eliminado.", "success")
     return redirect(url_for("admin_patrocinadores"))
 
+
+# ---------- Partidos (alta, edición, resultado manual, resultado aleatorio, eliminación) ----------
 
 @app.route("/admin/partidos", methods=["GET", "POST"])
 @admin_requerido
@@ -644,15 +595,37 @@ def admin_partidos():
     for p in todos:
         p["equipo_local_info"] = equipos_col.find_one({"_id": p.get("id_equipo_local")})
         p["equipo_visitante_info"] = equipos_col.find_one({"_id": p.get("id_equipo_visitante")})
+        p["resultado"] = resultados_col.find_one({"id_partido": p["_id"]})
 
     return render_template("admin_partidos.html", partidos=todos, equipos=equipos_lista, estadios=estadios_lista)
+
+
+@app.route("/admin/partidos/editar/<partido_id>", methods=["GET", "POST"])
+@admin_requerido
+def admin_editar_partido(partido_id):
+    partido = partidos_col.find_one({"_id": ObjectId(partido_id)})
+    equipos_lista = list(equipos_col.find())
+    estadios_lista = list(estadios_col.find())
+    if request.method == "POST":
+        partidos_col.update_one({"_id": ObjectId(partido_id)}, {"$set": {
+            "fecha": request.form.get("fecha"),
+            "hora": request.form.get("hora"),
+            "fase": request.form.get("fase"),
+            "id_equipo_local": ObjectId(request.form.get("id_equipo_local")),
+            "id_equipo_visitante": ObjectId(request.form.get("id_equipo_visitante")),
+            "id_estadio": ObjectId(request.form.get("id_estadio")) if request.form.get("id_estadio") else None,
+        }})
+        flash("Partido actualizado.", "success")
+        return redirect(url_for("admin_partidos"))
+    return render_template("admin_editar_partido.html", partido=partido, equipos=equipos_lista, estadios=estadios_lista)
 
 
 @app.route("/admin/partidos/resultado/<partido_id>", methods=["POST"])
 @admin_requerido
 def admin_actualizar_resultado(partido_id):
-    goles_local = int(request.form.get("goles_local", 0))
-    goles_visitante = int(request.form.get("goles_visitante", 0))
+    # entero_seguro evita el error 500 que ocurría si los campos llegaban vacíos
+    goles_local = entero_seguro(request.form.get("goles_local"), 0)
+    goles_visitante = entero_seguro(request.form.get("goles_visitante"), 0)
 
     resultados_col.update_one(
         {"id_partido": ObjectId(partido_id)},
@@ -667,6 +640,26 @@ def admin_actualizar_resultado(partido_id):
     return redirect(url_for("admin_partidos"))
 
 
+@app.route("/admin/partidos/resultado-aleatorio/<partido_id>", methods=["POST"])
+@admin_requerido
+def admin_resultado_aleatorio(partido_id):
+    """Genera un marcador aleatorio (0 a 5 goles por equipo) para pruebas rápidas."""
+    goles_local = random.randint(0, 5)
+    goles_visitante = random.randint(0, 5)
+
+    resultados_col.update_one(
+        {"id_partido": ObjectId(partido_id)},
+        {"$set": {
+            "id_partido": ObjectId(partido_id),
+            "goles_local": goles_local,
+            "goles_visitante": goles_visitante,
+        }},
+        upsert=True,
+    )
+    flash(f"Resultado aleatorio generado: {goles_local} - {goles_visitante}.", "success")
+    return redirect(url_for("admin_partidos"))
+
+
 @app.route("/admin/partidos/eliminar/<partido_id>")
 @admin_requerido
 def admin_eliminar_partido(partido_id):
@@ -676,11 +669,65 @@ def admin_eliminar_partido(partido_id):
     return redirect(url_for("admin_partidos"))
 
 
+# ---------- Usuarios (edición de rol/estado, eliminación) ----------
+
 @app.route("/admin/usuarios")
 @admin_requerido
 def admin_usuarios():
-    todos = list(usuarios_col.find())
-    return render_template("admin_usuarios.html", usuarios=todos)
+    return render_template("admin_usuarios.html", usuarios=list(usuarios_col.find()))
+
+
+@app.route("/admin/usuarios/editar/<usuario_id>", methods=["GET", "POST"])
+@admin_requerido
+def admin_editar_usuario(usuario_id):
+    usuario_obj = usuarios_col.find_one({"_id": ObjectId(usuario_id)})
+    if request.method == "POST":
+        usuarios_col.update_one({"_id": ObjectId(usuario_id)}, {"$set": {
+            "nombre": request.form.get("nombre"),
+            "correo": request.form.get("correo", "").strip().lower(),
+            "rol": request.form.get("rol"),
+            "es_mayor_edad": request.form.get("es_mayor_edad") == "on",
+        }})
+        flash("Usuario actualizado.", "success")
+        return redirect(url_for("admin_usuarios"))
+    return render_template("admin_editar_usuario.html", usuario=usuario_obj)
+
+
+@app.route("/admin/usuarios/eliminar/<usuario_id>")
+@admin_requerido
+def admin_eliminar_usuario(usuario_id):
+    actual = usuario_actual()
+    if str(actual["_id"]) == usuario_id:
+        flash("No puedes eliminar tu propia cuenta mientras tienes sesión iniciada.", "error")
+        return redirect(url_for("admin_usuarios"))
+    usuarios_col.delete_one({"_id": ObjectId(usuario_id)})
+    flash("Usuario eliminado.", "success")
+    return redirect(url_for("admin_usuarios"))
+
+
+# ---------- Apuestas (listado y eliminación) ----------
+
+@app.route("/admin/apuestas")
+@admin_requerido
+def admin_apuestas():
+    todas = list(apuestas_col.find().sort("fecha_apuesta", -1))
+    for a in todas:
+        a["usuario_info"] = usuarios_col.find_one({"_id": a.get("id_usuario")})
+        partido = partidos_col.find_one({"_id": a.get("id_partido")})
+        if partido:
+            partido["equipo_local_info"] = equipos_col.find_one({"_id": partido.get("id_equipo_local")})
+            partido["equipo_visitante_info"] = equipos_col.find_one({"_id": partido.get("id_equipo_visitante")})
+        a["partido_info"] = partido
+    total_apostado = sum(a.get("cantidad", 0) for a in todas)
+    return render_template("admin_apuestas.html", apuestas=todas, total_apostado=total_apostado)
+
+
+@app.route("/admin/apuestas/eliminar/<apuesta_id>")
+@admin_requerido
+def admin_eliminar_apuesta(apuesta_id):
+    apuestas_col.delete_one({"_id": ObjectId(apuesta_id)})
+    flash("Apuesta eliminada.", "success")
+    return redirect(url_for("admin_apuestas"))
 
 
 # ================== INICIALIZACIÓN ==================
@@ -690,7 +737,6 @@ def setup_admin():
     """Ruta de un solo uso para crear el primer administrador. Elimínala en producción."""
     if usuarios_col.find_one({"correo": "admin@copamundial.com"}):
         return "El administrador ya existe."
-
     usuarios_col.insert_one({
         "nombre": "Administrador",
         "correo": "admin@copamundial.com",
